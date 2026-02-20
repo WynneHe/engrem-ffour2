@@ -13,15 +13,24 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y git python3-pip python3-dev build-essential \
+            libssl-dev libffi-dev libxml2-dev libxslt1-dev zlib1g-dev \
+            libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm \
+            libncurses5-dev libncursesw5-dev xz-utils tk-dev liblzma-dev \
+            openjdk-11-jdk unzip zip
+
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.10'
 
-    - name: Install dependencies
+    - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install cython
+        pip install --upgrade cython
         pip install buildozer
 
     - name: Build APK
@@ -37,11 +46,7 @@ jobs:
         sed -i 's/android.sdk = 31/android.sdk = 31/g' buildozer.spec
         sed -i 's/android.ndk = 25b/android.ndk = 25b/g' buildozer.spec
         sed -i 's/android.arch = armeabi-v7a/android.arch = armeabi-v7a,arm64-v8a/g' buildozer.spec
-        # Build APK
-        buildozer android debug
-
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: engremfour2-apk
-        path: bin/*.apk
+        # Add license acceptance
+        mkdir -p ~/.android
+        echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" > ~/.android/repositories.cfg
+        echo "y" | buildozer android debug --verbose
