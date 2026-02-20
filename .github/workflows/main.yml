@@ -13,58 +13,70 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Create buildozer.spec file
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Install system dependencies
       run: |
-       # Create buildozer.spec with all necessary configurations
+        sudo apt-get update
+        sudo apt-get install -y git build-essential openjdk-11-jdk unzip zip wget
+
+    - name: Setup Android SDK
+      run: |
+        # Download and setup Android SDK
+        mkdir -p android-sdk
+        cd android-sdk
+        wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
+        unzip -q commandlinetools-linux-9477386_latest.zip
+        mv cmdline-tools latest
+        rm commandlinetools-linux-9477386_latest.zip
+        
+        # Set environment variables
+        echo "export ANDROID_HOME=$(pwd)" >> ~/.bashrc
+        echo "export PATH=\$PATH:$(pwd)/latest/bin:$(pwd)/platform-tools" >> ~/.bashrc
+        source ~/.bashrc
+        
+        # Accept licenses
+        yes | ./latest/bin/sdkmanager --licenses
+        
+        # Install required components
+        ./latest/bin/sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0"
+        
+        cd ..
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install cython buildozer pandas openpyxl
+
+    - name: Create buildozer.spec
+      run: |
         echo '[app]' > buildozer.spec
-        echo '' >> buildozer.spec
-        echo '# (str) Title of your application' >> buildozer.spec
         echo 'title = EngRem Four2' >> buildozer.spec
-        echo '' >> buildozer.spec
-        echo '# (str) Package name' >> buildozer.spec
         echo 'package.name = engremfour2' >> buildozer.spec
-        echo '' >> buildozer.spec
-        echo '# (str) Package domain (needed for android/ios packaging)' >> buildozer.spec
         echo 'package.domain = org.engrem' >> buildozer.spec
-        echo '' >> buildozer.spec
-        echo '# (str) Version of your application' >> buildozer.spec
         echo 'version = 0.1' >> buildozer.spec
-        echo '' >> buildozer.spec
-        echo '# (str) Source code where the main.py live' >> buildozer.spec
         echo 'source.dir = .' >> buildozer.spec
-        echo '' >> buildozer.spec
-        echo '# (list) Source files to include (let empty to include all the files)' >> buildozer.spec
         echo 'source.include_exts = py,png,jpg,kv,atlas,xlsx,wav,ttf,ttc' >> buildozer.spec
-        echo '' >> buildozer.spec
-        echo '# (list) List of inclusions using pattern matching' >> buildozer.spec
         echo 'source.include_patterns = data_four/*' >> buildozer.spec
-        echo '' >> buildozer.spec
-        echo '# (list) Application requirements' >> buildozer.spec
-        echo '# comma separated e.g. requirements = sqlite3,kivy' >> buildozer.spec
         echo 'requirements = python3,kivy,pandas,openpyxl' >> buildozer.spec
-        echo '' >> buildozer.spec
-        echo '# (str) Android API to use' >> buildozer.spec
         echo 'android.api = 31' >> buildozer.spec
-        echo '' >> buildozer.spec
-        echo '# (str) Android SDK version to use' >> buildozer.spec
         echo 'android.sdk = 31' >> buildozer.spec
-        echo '' >> buildozer.spec
-        echo '# (str) Android NDK version to use' >> buildozer.spec
         echo 'android.ndk = 25b' >> buildozer.spec
-        echo '' >> buildozer.spec
-        echo '# (str) Android ABI to use' >> buildozer.spec
         echo 'android.arch = armeabi-v7a,arm64-v8a' >> buildozer.spec
-        echo '' >> buildozer.spec
-        echo '# (bool) Indicate if the application should be fullscreen' >> buildozer.spec
         echo 'fullscreen = 0' >> buildozer.spec
 
-    - name: Build APK with alternative Docker image
+    - name: Build APK
       run: |
-        # Use a different Docker image with pre-configured Android SDK
-        docker run --rm -v $(pwd):/app -w /app \
-          ghcr.io/kivy/python-for-android:latest \
-          bash -c "pip install buildozer && yes | buildozer android debug"
-          
+        # Set environment variables
+        export ANDROID_HOME=$(pwd)/android-sdk
+        export PATH=$PATH:$ANDROID_HOME/latest/bin:$ANDROID_HOME/platform-tools
+        
+        # Run buildozer
+        buildozer android debug
+
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
