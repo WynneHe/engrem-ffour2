@@ -39,9 +39,6 @@ jobs:
         python3 -m pip install --upgrade pip
         pip3 install cython buildozer pandas openpyxl
         
-        # Set up buildozer
-        buildozer init
-        
         # Create necessary directories
         mkdir -p ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest
         mkdir -p ~/.buildozer/android/platform/android-sdk/build-tools
