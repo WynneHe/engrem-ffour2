@@ -13,42 +13,10 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install dependencies
+    - name: Install system dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y git build-essential openjdk-11-jdk unzip zip wget curl
-
-    - name: Setup Android SDK
-      run: |
-        # Create exact path that buildozer expects
-        mkdir -p ~/.buildozer/android/platform/android-sdk/build-tools
-        
-        # Download Android Command Line Tools
-        cd ~/.buildozer/android/platform/android-sdk
-        wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
-        unzip -q commandlinetools-linux-9477386_latest.zip
-        mv cmdline-tools latest
-        rm commandlinetools-linux-9477386_latest.zip
-        
-        # Create tools directory structure that buildozer expects
-        mkdir -p tools/bin
-        ln -s ../latest/bin/sdkmanager tools/bin/
-        
-        # Accept licenses
-        yes | latest/bin/sdkmanager --licenses
-        
-        # Install required components
-        latest/bin/sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0"
-        
-        # Create symlink for build-tools
-        ln -s build-tools/31.0.0 build-tools/latest
-        
-        cd -
-
-    - name: Install Python dependencies
-      run: |
-        python3 -m pip install --upgrade pip
-        pip3 install cython buildozer pandas openpyxl
 
     - name: Create buildozer.spec
       run: |
@@ -65,14 +33,67 @@ jobs:
         echo 'android.archs = armeabi-v7a,arm64-v8a' >> buildozer.spec
         echo 'fullscreen = 0' >> buildozer.spec
 
-    - name: Build APK
+    - name: Build APK with GitHub-hosted runner
       run: |
+        # Install Python dependencies
+        python3 -m pip install --upgrade pip
+        pip3 install cython buildozer pandas openpyxl
+        
+        # Set up buildozer
+        buildozer init
+        
+        # Override buildozer.spec with our configuration
+        cat > buildozer.spec << 'EOF'
+[app]
+title = EngRem Four2
+package.name = engremfour2
+package.domain = org.engrem
+version = 0.1
+source.dir = .
+source.include_exts = py,png,jpg,kv,atlas,xlsx,wav,ttf,ttc
+source.include_patterns = data_four/*
+requirements = python3,kivy,pandas,openpyxl
+android.api = 31
+android.archs = armeabi-v7a,arm64-v8a
+fullscreen = 0
+EOF
+        
+        # Create necessary directories
+        mkdir -p ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest
+        mkdir -p ~/.buildozer/android/platform/android-sdk/build-tools
+        mkdir -p ~/.buildozer/android/platform/android-sdk/platform-tools
+        
+        # Download and install Android Command Line Tools
+        cd ~/.buildozer/android/platform/android-sdk
+        wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
+        unzip -q commandlinetools-linux-9477386_latest.zip -d cmdline-tools
+        mv cmdline-tools/cmdline-tools/* cmdline-tools/latest/
+        rm -rf commandlinetools-linux-9477386_latest.zip cmdline-tools/cmdline-tools
+        
+        # Set SDK root
+        SDK_ROOT=~/.buildozer/android/platform/android-sdk
+        
+        # Accept licenses
+        yes | $SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_ROOT --licenses
+        
+        # Install required components
+        $SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_ROOT "platform-tools" "platforms;android-31" "build-tools;31.0.0"
+        
+        # Create symlinks
+        ln -sf $SDK_ROOT/build-tools/31.0.0 $SDK_ROOT/build-tools/latest
+        mkdir -p $SDK_ROOT/tools/bin
+        ln -sf $SDK_ROOT/cmdline-tools/latest/bin/sdkmanager $SDK_ROOT/tools/bin/
+        
+        # Return to project directory
+        cd -
+        
         # Set environment variables
         export ANDROID_HOME=~/.buildozer/android/platform/android-sdk
+        export ANDROID_SDK_ROOT=$ANDROID_HOME
         export PATH=$PATH:$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/latest
         
-        # Run buildozer
-        buildozer android debug
+        # Run buildozer with verbose output
+        buildozer android debug --verbose
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
