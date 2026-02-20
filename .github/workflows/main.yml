@@ -14,10 +14,12 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Install system dependencies
-      run: |
+      run: |       
         sudo apt-get update
-        sudo apt-get install -y git build-essential openjdk-11-jdk unzip zip wget curl
-
+        sudo apt-get install -y git build-essential 
+        openjdk-11-jdk unzip zip wget curl \
+            libtool autoconf automake pkg-config
+        
     - name: Create buildozer.spec
       run: |
         echo '[app]' > buildozer.spec
