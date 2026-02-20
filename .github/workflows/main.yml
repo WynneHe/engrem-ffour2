@@ -18,13 +18,13 @@ jobs:
       with:
         python-version: '3.10'
 
-    - name: Install system dependencies
+    - name: Install dependencies
       run: |
+        # Install system dependencies
         sudo apt-get update
         sudo apt-get install -y git build-essential openjdk-11-jdk unzip zip wget
 
-    - name: Install Python dependencies
-      run: |
+        # Install Python dependencies
         python -m pip install --upgrade pip
         pip install cython buildozer pandas openpyxl
 
@@ -40,44 +40,20 @@ jobs:
         echo 'source.include_patterns = data_four/*' >> buildozer.spec
         echo 'requirements = python3,kivy,pandas,openpyxl' >> buildozer.spec
         echo 'android.api = 31' >> buildozer.spec
-        echo 'android.sdk = 31' >> buildozer.spec
-        echo 'android.ndk = 25b' >> buildozer.spec
-        echo 'android.arch = armeabi-v7a,arm64-v8a' >> buildozer.spec
+        echo 'android.archs = armeabi-v7a,arm64-v8a' >> buildozer.spec
         echo 'fullscreen = 0' >> buildozer.spec
 
-    - name: Setup Android SDK in buildozer path
-      run: |
-        # Create buildozer's expected Android SDK path
-        mkdir -p ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest
-        cd ~/.buildozer/android/platform/android-sdk
-        
-        # Download and setup Android SDK
-        wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
-        unzip -q commandlinetools-linux-9477386_latest.zip -d cmdline-tools
-        mv cmdline-tools/cmdline-tools/* cmdline-tools/latest/
-        rm -rf commandlinetools-linux-9477386_latest.zip cmdline-tools/cmdline-tools
-        
-        # Create platform-tools directory
-        mkdir -p platform-tools
-        
-        # Set SDK root
-        SDK_ROOT=$(pwd)
-        
-        # Accept licenses
-        yes | ./cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_ROOT --licenses
-        
-        # Install required components
-        ./cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_ROOT "platform-tools" "platforms;android-31" "build-tools;31.0.0"
-        
-        # Create symlink for build-tools
-        ln -s $SDK_ROOT/build-tools/31.0.0 $SDK_ROOT/build-tools/latest
-        
-        cd -
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
 
     - name: Build APK
       run: |
-        # Run buildozer
-        buildozer android debug
+        # Set ANDROID_HOME to match the setup-android action
+        export ANDROID_HOME=$ANDROID_HOME
+        export ANDROID_SDK_ROOT=$ANDROID_HOME
+        
+        # Run buildozer with debug output
+        buildozer android debug --verbose
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
