@@ -58,11 +58,14 @@ jobs:
         echo '# (bool) Indicate if the application should be fullscreen' >> buildozer.spec
         echo 'fullscreen = 0' >> buildozer.spec
 
-    - name: Build APK with Docker
+    - name: Build APK with license acceptance
       run: |
-        # Use pre-built Docker image with all dependencies
-        docker run --rm -v $(pwd):/home/user/hostcwd kivy/buildozer:latest android debug
-
+        # Use Docker with explicit license acceptance
+        docker run --rm -v $(pwd):/home/user/hostcwd \
+          -e ANDROID_HOME=/home/user/android-sdk \
+          kivy/buildozer:latest \
+          bash -c "yes | buildozer android debug"
+          
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
