@@ -13,10 +13,37 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install system dependencies
+    - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y git build-essential openjdk-11-jdk unzip zip wget
+        sudo apt-get install -y git build-essential openjdk-11-jdk unzip zip wget curl
+
+    - name: Setup Android SDK
+      run: |
+        # Create exact path that buildozer expects
+        mkdir -p ~/.buildozer/android/platform/android-sdk/build-tools
+        
+        # Download Android Command Line Tools
+        cd ~/.buildozer/android/platform/android-sdk
+        wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
+        unzip -q commandlinetools-linux-9477386_latest.zip
+        mv cmdline-tools latest
+        rm commandlinetools-linux-9477386_latest.zip
+        
+        # Create tools directory structure that buildozer expects
+        mkdir -p tools/bin
+        ln -s ../latest/bin/sdkmanager tools/bin/
+        
+        # Accept licenses
+        yes | latest/bin/sdkmanager --licenses
+        
+        # Install required components
+        latest/bin/sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0"
+        
+        # Create symlink for build-tools
+        ln -s build-tools/31.0.0 build-tools/latest
+        
+        cd -
 
     - name: Install Python dependencies
       run: |
@@ -38,9 +65,12 @@ jobs:
         echo 'android.archs = armeabi-v7a,arm64-v8a' >> buildozer.spec
         echo 'fullscreen = 0' >> buildozer.spec
 
-    - name: Build APK with bash
-      shell: bash
+    - name: Build APK
       run: |
+        # Set environment variables
+        export ANDROID_HOME=~/.buildozer/android/platform/android-sdk
+        export PATH=$PATH:$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/latest
+        
         # Run buildozer
         buildozer android debug
 
