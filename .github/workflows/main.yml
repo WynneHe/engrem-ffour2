@@ -48,33 +48,30 @@ jobs:
         # Create buildozer's expected Android SDK path
         BUILDOZER_ANDROID_DIR=~/.buildozer/android/platform
         ANDROID_SDK_DIR=$BUILDOZER_ANDROID_DIR/android-sdk
-        mkdir -p $ANDROID_SDK_DIR
+        mkdir -p $ANDROID_SDK_DIR/cmdline-tools/latest
         
         # Download and setup Android Command Line Tools
         cd $ANDROID_SDK_DIR
         wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
-        unzip -q commandlinetools-linux-9477386_latest.zip
-        mv cmdline-tools latest
-        rm commandlinetools-linux-9477386_latest.zip
+        unzip -q commandlinetools-linux-9477386_latest.zip -d cmdline-tools
+        mv cmdline-tools/cmdline-tools/* cmdline-tools/latest/
+        rm -rf commandlinetools-linux-9477386_latest.zip cmdline-tools/cmdline-tools
         
         # Create necessary directories
         mkdir -p platform-tools build-tools
         
         # Set SDK root
-        export ANDROID_HOME=$ANDROID_SDK_DIR
-        export ANDROID_SDK_ROOT=$ANDROID_SDK_DIR
+        SDK_ROOT=$ANDROID_SDK_DIR
         
-        # Accept licenses
-        yes | $ANDROID_HOME/latest/bin/sdkmanager --licenses
+        # Accept licenses with explicit SDK root
+        yes | $SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_ROOT --licenses
         
-        # Install required components
-        $ANDROID_HOME/latest/bin/sdkmanager "platform-tools" "platforms;android-31" "build-tools;31.0.0"
+        # Install required components with explicit SDK root
+        $SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$SDK_ROOT "platform-tools" "platforms;android-31" "build-tools;31.0.0"
         
-        # Create symlink for build-tools
-        ln -s $ANDROID_HOME/build-tools/31.0.0 $ANDROID_HOME/build-tools/latest
-        
-        # Verify Aidl is available
-        ls -la $ANDROID_HOME/build-tools/latest/aidl || echo "Aidl not found"
+        # Verify installation
+        ls -la $SDK_ROOT/build-tools/
+        ls -la $SDK_ROOT/build-tools/31.0.0/aidl || echo "Aidl not found"
         
         cd -
 
