@@ -15,7 +15,7 @@ jobs:
 
     - name: Create buildozer.spec file
       run: |
-        # Create buildozer.spec with all necessary configurations
+       # Create buildozer.spec with all necessary configurations
         echo '[app]' > buildozer.spec
         echo '' >> buildozer.spec
         echo '# (str) Title of your application' >> buildozer.spec
@@ -26,6 +26,9 @@ jobs:
         echo '' >> buildozer.spec
         echo '# (str) Package domain (needed for android/ios packaging)' >> buildozer.spec
         echo 'package.domain = org.engrem' >> buildozer.spec
+        echo '' >> buildozer.spec
+        echo '# (str) Version of your application' >> buildozer.spec
+        echo 'version = 0.1' >> buildozer.spec
         echo '' >> buildozer.spec
         echo '# (str) Source code where the main.py live' >> buildozer.spec
         echo 'source.dir = .' >> buildozer.spec
