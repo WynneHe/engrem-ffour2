@@ -16,52 +16,49 @@ jobs:
     - name: Create buildozer.spec file
       run: |
         # Create buildozer.spec with all necessary configurations
-        cat > buildozer.spec << EOF
-[app]
-
-# (str) Title of your application
-title = EngRem Four2
-
-# (str) Package name
-package.name = engremfour2
-
-# (str) Package domain (needed for android/ios packaging)
-package.domain = org.engrem
-
-# (str) Source code where the main.py live
-source.dir = .
-
-# (list) Source files to include (let empty to include all the files)
-source.include_exts = py,png,jpg,kv,atlas,xlsx,wav,ttf,ttc
-
-# (list) List of inclusions using pattern matching
-source.include_patterns = data_four/*
-
-# (list) Application requirements
-# comma separated e.g. requirements = sqlite3,kivy
-requirements = python3,kivy,pandas,openpyxl
-
-# (str) Android API to use
-android.api = 31
-
-# (str) Android SDK version to use
-android.sdk = 31
-
-# (str) Android NDK version to use
-android.ndk = 25b
-
-# (str) Android ABI to use
-android.arch = armeabi-v7a,arm64-v8a
-
-# (bool) Indicate if the application should be fullscreen
-fullscreen = 0
-EOF
+        echo '[app]' > buildozer.spec
+        echo '' >> buildozer.spec
+        echo '# (str) Title of your application' >> buildozer.spec
+        echo 'title = EngRem Four2' >> buildozer.spec
+        echo '' >> buildozer.spec
+        echo '# (str) Package name' >> buildozer.spec
+        echo 'package.name = engremfour2' >> buildozer.spec
+        echo '' >> buildozer.spec
+        echo '# (str) Package domain (needed for android/ios packaging)' >> buildozer.spec
+        echo 'package.domain = org.engrem' >> buildozer.spec
+        echo '' >> buildozer.spec
+        echo '# (str) Source code where the main.py live' >> buildozer.spec
+        echo 'source.dir = .' >> buildozer.spec
+        echo '' >> buildozer.spec
+        echo '# (list) Source files to include (let empty to include all the files)' >> buildozer.spec
+        echo 'source.include_exts = py,png,jpg,kv,atlas,xlsx,wav,ttf,ttc' >> buildozer.spec
+        echo '' >> buildozer.spec
+        echo '# (list) List of inclusions using pattern matching' >> buildozer.spec
+        echo 'source.include_patterns = data_four/*' >> buildozer.spec
+        echo '' >> buildozer.spec
+        echo '# (list) Application requirements' >> buildozer.spec
+        echo '# comma separated e.g. requirements = sqlite3,kivy' >> buildozer.spec
+        echo 'requirements = python3,kivy,pandas,openpyxl' >> buildozer.spec
+        echo '' >> buildozer.spec
+        echo '# (str) Android API to use' >> buildozer.spec
+        echo 'android.api = 31' >> buildozer.spec
+        echo '' >> buildozer.spec
+        echo '# (str) Android SDK version to use' >> buildozer.spec
+        echo 'android.sdk = 31' >> buildozer.spec
+        echo '' >> buildozer.spec
+        echo '# (str) Android NDK version to use' >> buildozer.spec
+        echo 'android.ndk = 25b' >> buildozer.spec
+        echo '' >> buildozer.spec
+        echo '# (str) Android ABI to use' >> buildozer.spec
+        echo 'android.arch = armeabi-v7a,arm64-v8a' >> buildozer.spec
+        echo '' >> buildozer.spec
+        echo '# (bool) Indicate if the application should be fullscreen' >> buildozer.spec
+        echo 'fullscreen = 0' >> buildozer.spec
 
     - name: Build APK with Docker
       run: |
         # Use pre-built Docker image with all dependencies
-        docker run --rm -v $(pwd):/home/user/hostcwd \
-          kivy/buildozer:latest android debug
+        docker run --rm -v $(pwd):/home/user/hostcwd kivy/buildozer:latest android debug
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
