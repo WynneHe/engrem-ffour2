@@ -13,28 +13,54 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.10'
-
-    - name: Install dependencies
+    - name: Create buildozer.spec file
       run: |
-        # Install system dependencies
-        sudo apt-get update
-        sudo apt-get install -y git build-essential openjdk-11-jdk unzip zip
+        # Create buildozer.spec with all necessary configurations
+        cat > buildozer.spec << EOF
+[app]
 
-        # Install Python dependencies
-        python -m pip install --upgrade pip
-        pip install --upgrade cython buildozer
+# (str) Title of your application
+title = EngRem Four2
+
+# (str) Package name
+package.name = engremfour2
+
+# (str) Package domain (needed for android/ios packaging)
+package.domain = org.engrem
+
+# (str) Source code where the main.py live
+source.dir = .
+
+# (list) Source files to include (let empty to include all the files)
+source.include_exts = py,png,jpg,kv,atlas,xlsx,wav,ttf,ttc
+
+# (list) List of inclusions using pattern matching
+source.include_patterns = data_four/*
+
+# (list) Application requirements
+# comma separated e.g. requirements = sqlite3,kivy
+requirements = python3,kivy,pandas,openpyxl
+
+# (str) Android API to use
+android.api = 31
+
+# (str) Android SDK version to use
+android.sdk = 31
+
+# (str) Android NDK version to use
+android.ndk = 25b
+
+# (str) Android ABI to use
+android.arch = armeabi-v7a,arm64-v8a
+
+# (bool) Indicate if the application should be fullscreen
+fullscreen = 0
+EOF
 
     - name: Build APK with Docker
       run: |
         # Use pre-built Docker image with all dependencies
         docker run --rm -v $(pwd):/home/user/hostcwd \
-          -e BUILDOZER_ANDROID_API_LEVEL=31 \
-          -e BUILDOZER_ANDROID_SDK_VERSION=31 \
-          -e BUILDOZER_ANDROID_NDK_VERSION=25b \
           kivy/buildozer:latest android debug
 
     - name: Upload APK
