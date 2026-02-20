@@ -42,22 +42,6 @@ jobs:
         # Set up buildozer
         buildozer init
         
-        # Override buildozer.spec with our configuration
-        cat > buildozer.spec << 'EOF'
-[app]
-title = EngRem Four2
-package.name = engremfour2
-package.domain = org.engrem
-version = 0.1
-source.dir = .
-source.include_exts = py,png,jpg,kv,atlas,xlsx,wav,ttf,ttc
-source.include_patterns = data_four/*
-requirements = python3,kivy,pandas,openpyxl
-android.api = 31
-android.archs = armeabi-v7a,arm64-v8a
-fullscreen = 0
-EOF
-        
         # Create necessary directories
         mkdir -p ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest
         mkdir -p ~/.buildozer/android/platform/android-sdk/build-tools
